@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VehicleType {
+  SUV
+  BERLINE
+  FOUR_X_FOUR
+  PICK_UP
+  UTILITAIRE
+  CITADINE
+  MONOSPACE
+  AUTRE
+}
+
+enum FuelType {
+  ESSENCE
+  DIESEL
+  HYBRIDE
+  ELECTRIQUE
+}
+
+enum TransmissionType {
+  AUTOMATIQUE
+  MANUELLE
+  AUTRE
+}
+
+enum VehicleStatus {
+  DISPONIBLE
+  VENDU
+  LOUE
+  RESERVE
+  EN_ARRIVAGE
+}
+
+enum RequestStatus {
+  NOUVELLE
+  EN_COURS
+  CONTACTEE
+  TRAITEE
+  ANNULEE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Vehicle {
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  marque            String
+  modele            String
+  annee             Int
+  prix              Int
+  prixPromotionnel  Int?
+  devise            String           @default("FCFA")
+  kilometrage       Int?
+  carburant         FuelType
+  boiteVitesse      TransmissionType
+  moteur            String?
+  puissance         Int?
+  couleur           String?
+  nombrePlaces      Int?
+  type              VehicleType
+  etat              String
+  statut            VehicleStatus    @default(DISPONIBLE)
+  localisation      String?
+  description       String?
+  featured          Boolean          @default(false)
+  displayOrder      Int              @default(0)
+  hidePrice         Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  images            VehicleImage[]
+  features          VehicleFeature[]
+  promotion         Promotion?
+
+  @@index([slug])
+  @@index([marque])
+  @@index([modele])
+  @@index([statut])
+  @@index([prix])
+  @@index([annee])
+  @@index([type])
+  @@map("vehicles")
+}
+
+model VehicleImage {
+  id        String   @id @default(cuid())
+  vehicleId String
+  url       String
+  alt       String?
+  order     Int      @default(0)
+  isMain    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
+}
+
+model VehicleFeature {
+  id        String   @id @default(cuid())
+  vehicleId String
+  name      String
+  value     String?
+  createdAt DateTime @default(now())
+
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_features")
+}
+
+model Promotion {
+  id              String    @id @default(cuid())
+  vehicleId       String?   @unique
+  nom             String?
+  description     String?
+  pourcentage     Int?
+  dateDebut       DateTime?
+  dateFin         DateTime?
+  active          Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vehicle         Vehicle?  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("promotions")
+}
+
+model RentalRequest {
+  id            String        @id @default(cuid())
+  nom           String
+  telephone     String
+  whatsapp      String?
+  email         String?
+  vehicleId     String?
+  dateDebut     DateTime?
+  dateFin       DateTime?
+  message       String?
+  statut        RequestStatus @default(NOUVELLE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("rental_requests")
+}
+
+model ImportRequest {
+  id                String        @id @default(cuid())
+  nom               String
+  telephone         String
+  whatsapp          String?
+  email             String?
+  paysOrigine       String
+  marque            String?
+  modele            String?
+  anneeSouhaitee    Int?
+  budget            Int?
+  typeVehicule      String?
+  description       String?
+  statut            RequestStatus @default(NOUVELLE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("import_requests")
+}
+
+model ExportRequest {
+  id                String        @id @default(cuid())
+  nom               String
+  telephone         String
+  email             String?
+  paysDestination   String
+  vehiculeRecherche String?
+  quantite          Int?
+  budget            Int?
+  message           String?
+  statut            RequestStatus @default(NOUVELLE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("export_requests")
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  nom       String
+  email     String?
+  telephone String?
+  sujet     String?
+  message   String
+  statut    RequestStatus @default(NOUVELLE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("contact_messages")
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
